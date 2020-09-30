@@ -237,21 +237,28 @@ void to_bytes(uint64_t data, uint8_t* buffer) {
 }
 
 void des_file(char* in_filename, char* out_filename, const char* key_filename, bool is_encrypt) {
+    // 打开文件
     FILE* in_file = fopen(in_filename, "rb"),
         * out_file = fopen(out_filename, "wb+"),
         * key_file = fopen(key_filename, "rb");
 
     uint8_t buf[8] = { 0 };
+    // 加载密钥
     fread(buf, sizeof(uint8_t), 8, key_file);
     uint64_t key = to_uint64(buf);
     fclose(key_file);
 
+    fseek(in_file, 0, SEEK_END);
     uint64_t fsize = ftell(in_file);
+    fseek(in_file, 0, SEEK_SET);
     uint64_t buf_len = 0;
+    // 每次处理 64 位数据
     while ((buf_len = fread(buf, sizeof(uint8_t), 8, in_file))) {
+        // 每次减少读入的大小
         fsize -= buf_len;
         uint64_t ret = 0;
         int valid_len = 0;
+        // 如果是加密则进行填充
         if (is_encrypt) {
             for (uint64_t i = buf_len; i < 8; i++) {
                 buf[i] = (uint8_t)buf_len;
@@ -259,11 +266,13 @@ void des_file(char* in_filename, char* out_filename, const char* key_filename, b
             ret = des_block(to_uint64(buf), key, is_encrypt);
             valid_len = 8;
         }
+        // 如果是解密则将最后不足 8 位的跳过
         else if (buf_len == 8) {
             ret = des_block(to_uint64(buf), key, is_encrypt);
-            valid_len = ret & 0x7;
+            valid_len = fsize == 0 ? ((ret & 0xF) > 8 ? 8 : (ret & 0xF)) : 8;
         }
         to_bytes(ret, buf);
+        // 写入文件
         fwrite(buf, sizeof(uint8_t), valid_len, out_file);
     }
 
