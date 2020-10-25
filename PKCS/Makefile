@@ -1,5 +1,5 @@
 LINKS_FLAGS=-lgmp
-C_FLAGS=-g
+C_FLAGS=-static
 CC = gcc
 
 RSA:
