@@ -41,9 +41,9 @@ const int IP[] = {
 ## 子密钥生成
 DES 算法中需要用到子密钥，子密钥是根据输入的密钥生成 16 个子密钥。
 
-生成子密钥需要将输入的密钥的非校验位进行 PC-1 置换，然后取出高低 28 位 C、D，再生成 16 个 48 位子密钥。此过程中需要不断对 C、D 进行循环左移，当计算第 1、2、9 和 16 个子密钥时需要循环左移 2 位，否则只需要 1 位：
+生成子密钥需要将输入的密钥的非校验位进行 PC-1 置换，然后取出高低 28 位 C、D，再生成 16 个 48 位子密钥。此过程中需要不断对 C、D 进行循环左移，当计算第 1、2、9 和 16 个子密钥时需要循环左移 1 位，否则需要 2 位：
 ```cpp
-void gen_subkeys(uint64_t key, uint64_t* subkeys) {
+void gen_subkeys(uint64_t key, uint64_t* subkeys) 
     // PC-1 置换
     uint64_t pc1_ret = transform(PC1, key, 64, 56);
     uint32_t C = (pc1_ret >> 28) & 0xFFFFFFF;
