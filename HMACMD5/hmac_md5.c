@@ -129,8 +129,8 @@ void md5_transform(context *ctx)
     for (i32 i = 0; i < 16; i++)
     {
         ctx->state.self.a = FF(ctx->state.self.a, ctx->state.self.b, ctx->state.self.c, ctx->state.self.d, ctx->x.word[index], FF_s[i % 4], T[i]);
-        rotate(ctx);
         index = (index + 1) % 16;
+        rotate(ctx);
     }
     index = 1;
     for (i32 i = 16; i < 32; i++)
