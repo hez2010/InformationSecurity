@@ -1,10 +1,12 @@
 #include <malloc.h>
 #include <memory.h>
 #include <string.h>
+#include <stdio.h>
 
 typedef unsigned char u8;
 typedef unsigned long u32;
 typedef unsigned long long u64;
+typedef char i8;
 typedef long i32;
 typedef long long i64;
 
@@ -74,6 +76,11 @@ inline u32 H(u32 x, u32 y, u32 z)
     return x ^ y ^ z;
 }
 
+inline u32 I(u32 x, u32 y, u32 z)
+{
+    return y ^ (x | (~z));
+}
+
 inline u32 FF(u32 a, u32 b, u32 c, u32 d, u32 x, u32 s, u32 ac)
 {
     a += F(b, c, d) + x + ac;
@@ -96,11 +103,6 @@ inline u32 HH(u32 a, u32 b, u32 c, u32 d, u32 x, u32 s, u32 ac)
     a = lshift(a, s);
     a += b;
     return a;
-}
-
-inline u32 I(u32 x, u32 y, u32 z)
-{
-    return y ^ (x | (~z));
 }
 
 inline u32 II(u32 a, u32 b, u32 c, u32 d, u32 x, u32 s, u32 ac)
@@ -240,16 +242,34 @@ void hmac_init(char *key, char *input, i32 key_len, i32 input_len, u8 **ipad_out
     *opad_out = opad;
 }
 
-i32 main()
+i32 main(i32 argc, i8 **argv)
 {
+    if (argc < 2) {
+        printf("HMAC-MD5 Usage:\n");
+        printf("./HMACMD5 [keyfile] [inputfile]");
+        return 0;
+    }
     u8 buffer[64 + 16];
     context ctx;
-    char *key = "Jefe";
-    char *msg = "what do ya want for nothing?";
+    FILE* keyfile = fopen(*(argv + 1), "rb");
+    FILE* msgfile = fopen(*(argv + 2), "rb");
+    fseek(keyfile, 0, SEEK_END);
+    fseek(msgfile, 0, SEEK_END);
+    i32 keylen = ftell(keyfile);
+    i32 msglen = ftell(msgfile);
+
+    char *key = (char*)malloc(keylen * sizeof(char));
+    char *msg = (char*)malloc(msglen * sizeof(char));
+
+    fseek(keyfile, 0, SEEK_SET);
+    fseek(msgfile, 0, SEEK_SET);
+    fread(key, sizeof(char), keylen, keyfile);
+    fread(msg, sizeof(char), msglen, msgfile);
+
     u8 *ipad, *opad;
-    hmac_init(key, msg, strlen(key), strlen(msg), &ipad, &opad);
+    hmac_init(key, msg, keylen, msglen, &ipad, &opad);
     md5_init(&ctx);
-    md5_update(&ctx, ipad, 64 + strlen(msg));
+    md5_update(&ctx, ipad, 64 + msglen);
     md5_final(&ctx);
     memcpy(buffer, opad, 64);
     memcpy(buffer + 64, ctx.state.byte, 16);
@@ -258,6 +278,6 @@ i32 main()
     md5_init(&ctx);
     md5_update(&ctx, buffer, 64 + 16);
     md5_final(&ctx);
-    printf("0x%0.2x%0.2x%0.2x%0.2x%0.2x%0.2x%0.2x%0.2x%0.2x%0.2x%0.2x%0.2x%0.2x%0.2x%0.2x%0.2x\n", ctx.state.byte[0], ctx.state.byte[1], ctx.state.byte[2], ctx.state.byte[3], ctx.state.byte[4], ctx.state.byte[5], ctx.state.byte[6], ctx.state.byte[7], ctx.state.byte[8], ctx.state.byte[9], ctx.state.byte[10], ctx.state.byte[11], ctx.state.byte[12], ctx.state.byte[13], ctx.state.byte[14], ctx.state.byte[15]);
+    printf("%0.2x%0.2x%0.2x%0.2x%0.2x%0.2x%0.2x%0.2x%0.2x%0.2x%0.2x%0.2x%0.2x%0.2x%0.2x%0.2x\n", ctx.state.byte[0], ctx.state.byte[1], ctx.state.byte[2], ctx.state.byte[3], ctx.state.byte[4], ctx.state.byte[5], ctx.state.byte[6], ctx.state.byte[7], ctx.state.byte[8], ctx.state.byte[9], ctx.state.byte[10], ctx.state.byte[11], ctx.state.byte[12], ctx.state.byte[13], ctx.state.byte[14], ctx.state.byte[15]);
     return 0;
 }
