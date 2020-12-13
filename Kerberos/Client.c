@@ -87,10 +87,10 @@ int main() {
     free(msgH.data);
 
     if (clientData.timestamp == client.timestamp + 1) {
-        printf("[Info] Kerberos authentication succeeded, original timestamp: %llu, reponse timestamp: %llu\n", client.timestamp, clientData.timestamp);
+        printf("[Info] Kerberos authentication succeeded, original timestamp: %llu, response timestamp: %llu\n", client.timestamp, clientData.timestamp);
     }
     else {
-        printf("[Error] Failed to authenticate with Kerberos, original timestamp: %llu, reponse timestamp: %llu\n", client.timestamp, clientData.timestamp);
+        printf("[Error] Failed to authenticate with Kerberos, original timestamp: %llu, response timestamp: %llu\n", client.timestamp, clientData.timestamp);
     }
 
     return 0;
